@@ -1,0 +1,87 @@
+/* src/styles/index.css */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f8f8;
+    margin: 0;
+    padding: 0;
+  }
+  
+  h1 {
+    text-align: center;
+    margin: 20px 0;
+    color: #333;
+  }
+  
+  .searchtab {
+    text-align: center;
+    margin: 20px;
+  }
+  
+  .searchtab input {
+    padding: 10px;
+    width: 200px;
+    margin-right: 10px;
+  }
+  
+  .searchtab button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .searchtab button:hover {
+    background-color: #0056b3;
+  }
+  
+  .items {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .itemcard {
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    width: 250px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.2s;
+    margin-left: 15px;
+    margin-bottom: 15px;
+
+  }
+  
+  .itemcard:hover {
+    transform: translateY(-10px);
+  }
+  
+  .itemcard h1 {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  
+  .itemcard img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin-bottom: 10px;
+  }
+  
+  .itemcard h3 {
+    font-size: 16px;
+    color: #666;
+  }
+  
+  .menu{
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: 10px;
+  }
