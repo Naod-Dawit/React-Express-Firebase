@@ -1,16 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import useMessages from "./useMessages";
-import "../styles/chats.css";
 import { uploadFile } from "./Uploadfiles";
-import { auth } from "../firebaseconfig";
-import { signOut, onAuthStateChanged } from "firebase/auth";
+import { auth, updateUserStatus } from "../firebaseconfig";
+import "../styles/chats.css";
+import { signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import { renderFilePreview } from "./Uploadfiles";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 const ChatSection = ({ recipientId, setRecipientId, currentUser, users }) => {
   const navigate = useNavigate();
 
   const [newMessage, setNewMessage] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [showAttachments, setShowAttachments] = useState(false);
 
   const { messages, sendMessage, currentUserName, messagesEndRef } =
     useMessages(recipientId, currentUser);
@@ -22,30 +25,23 @@ const ChatSection = ({ recipientId, setRecipientId, currentUser, users }) => {
       setSelectedFile(e.target.files[0]);
     }
   };
-  const handleSendfile = async (e) => {
+  const handleSendfile = async () => {
     if (selectedFile) {
       try {
-        const fileName = `${Date.now()}_${selectedFile.name}}`;
+        const fileName = `${Date.now()}_${selectedFile.name}`;
         const filePath = `chat_files/${fileName}`;
 
         const fileURL = await uploadFile(selectedFile, filePath);
+        console.log("File URL: ", fileURL);
         await sendMessage(fileURL);
         setSelectedFile(null);
+        setShowAttachments(false);
       } catch (error) {
-        console.error(`Error sending file`, error);
+        console.error("Error sending file: ", error);
       }
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-      navigate("/");
-      alert("Logged out successfully");
-    } catch (err) {
-      console.error(err);
-    }
-  };
   return (
     <div className="chat-section">
       <div className="messages-box">
@@ -66,16 +62,9 @@ const ChatSection = ({ recipientId, setRecipientId, currentUser, users }) => {
               }`}
             >
               {message.text && !message.text.startsWith("http") ? (
-                <span> {message.text}</span>
+                <span>{message.text}</span>
               ) : message.text && message.text.startsWith("http") ? (
-                <a
-                  href={message.text}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="file-link"
-                >
-                  View file
-                </a>
+                renderFilePreview(message.text)
               ) : null}
             </div>
           ))}
@@ -89,31 +78,32 @@ const ChatSection = ({ recipientId, setRecipientId, currentUser, users }) => {
           className="chat-input-box"
         />
         <div
-          onClick={() =>
-            (document.getElementById("attachments").style.display = "block")
-          }
+          onClick={() => setShowAttachments(!showAttachments)}
+          style={{ cursor: "pointer" }}
         >
-          📎
+          <FontAwesomeIcon icon="fa-solid fa-paperclip" fade />
         </div>
         <input
           id="attachments"
           type="file"
-          style={{ display: "none" }}
+          style={{ display: showAttachments ? "block" : "none" }}
           onChange={handleFileChange}
         />
         <button
           className="chat-send-box"
-          onClick={() => {
-            sendMessage(newMessage);
-            setNewMessage("");
+          onClick={async () => {
+            if (newMessage) {
+              await sendMessage(newMessage);
+              setNewMessage("");
+            }
             handleSendfile();
           }}
         >
-          Send
-        </button>
-
-        <button className="sign-out-button" onClick={handleSignOut}>
-          Sign out
+          <FontAwesomeIcon
+            icon="fa-regular fa-paper-plane"
+            bounce
+            style={{ color: "#74C0FC" }}
+          />
         </button>
       </div>
     </div>

@@ -57,7 +57,7 @@ const Signup = () => {
       });
 
       alert("Account created successfully");
-      navigate("/");
+      navigate('/userpage')
     } catch (error) {
       console.error("Error signing up:", error);
     }
@@ -97,6 +97,7 @@ const Signup = () => {
           value={data.age}
           onChange={handleInputs}
         />
+        <label>Profile picture</label>
         <input
           type="file"
           accept="image/*"

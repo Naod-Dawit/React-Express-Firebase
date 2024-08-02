@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { db, auth } from "../firebaseconfig";
+import { db, auth, updateUserStatus, realTimeDb } from "../firebaseconfig";
 import { collection, getDocs } from "firebase/firestore";
-import { signOut, onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged,signOut } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import ChatSection from "./ChatSection";
 import "../styles/chats.css";
+
+import { ref, onValue } from "firebase/database";
 
 const ChatPage = () => {
   const navigate = useNavigate();
@@ -14,6 +16,8 @@ const ChatPage = () => {
   const [currentUser, setCurrentUser] = useState("");
   const [Avatar, setAvatar] = useState("");
   const [searchTarget, setSearchTarget] = useState("");
+  const [blockedUsers, setBlockedUsers] = useState([]);
+
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
@@ -36,6 +40,7 @@ const ChatPage = () => {
         ...doc.data(),
       }));
       setUsers(usersList);
+      
 
       const currentUser = usersList.find(
         (user) => user.userId === auth.currentUser?.uid
@@ -46,6 +51,22 @@ const ChatPage = () => {
       if (currentUser) {
         setCurrentUser(currentUser.name);
       }
+
+
+      usersList.forEach((user) => {
+        
+        const statusRef = ref(realTimeDb, `status/${user.userId}`);
+        onValue(statusRef, (snapshot) => {
+          const status = snapshot.val();
+          user.online = status?.online || false;
+          setUsers([...usersList]);
+          
+          
+        });
+      });
+      console.log(usersList);
+      
+      
     } catch (error) {
       console.error("Error fetching users:", error);
     }
@@ -57,22 +78,61 @@ const ChatPage = () => {
       user.name.toLowerCase().includes(searchTarget.toLowerCase())
     );
 
+  useEffect(() => {
+    const handleUserStatus = () => {
+      if (user) {
+        updateUserStatus(user.uid, true);
+      }
+    };
+
+    const handleUserLogout = () => {
+      if (user) {
+        updateUserStatus(user.uid, false);
+      }
+    };
+
+    handleUserStatus();
+
+    return () => handleUserLogout();
+  }, [user]);
+
+  const handleSignOut = async () => {
+    try {
+      if (auth.currentUser) {
+        await updateUserStatus(auth.currentUser.uid, false);
+        alert("Logged out Successfully")
+      }
+      await signOut(auth);
+    } catch (error) {
+      console.error("Sign out error:", error);
+    }
+  };
+
   return (
     <div className="chat-page">
       <div className="users-list">
         <label>CHATS </label>
-        <input type="text" placeholder="Search" onChange={(e) => setSearchTarget(e.target.value)} />
+        <input
+          type="text"
+          placeholder="Search"
+          onChange={(e) => setSearchTarget(e.target.value)}
+        />
         {filteredUsers.map((user) => (
           <div
             key={user.id}
-            className={`chats-box ${recipientId === user.userId ? 'selected' : ''}`}
+            className={`chats-box ${
+              recipientId === user.userId ? "selected" : ""
+            }`}
             onClick={() => setRecipientId(user.userId)}
           >
-            {user.avatar ? (
-              <img src={user.avatar} alt={user.name} className="avatar" />
-            ) : (
-              <div className="avatar-placeholder">No Image</div>
-            )}
+            <div className="avatar-container">
+              {user.online && <div className="online-status-bubble"></div>}
+              {user.avatar ? (
+                <img src={user.avatar} alt={user.name} className="avatar" />
+              ) : (
+                <div className="avatar-placeholder">No Image</div>
+              )}
+            </div>
             <span className="user-name">{user.name}</span>
           </div>
         ))}
@@ -97,6 +157,15 @@ const ChatPage = () => {
         )}
         <h1 style={{ textAlign: "center" }}>{currentUser}</h1>
       </div>
+
+
+
+
+
+
+      <button className="sign-out-button" onClick={handleSignOut}>
+          Sign out
+        </button>
     </div>
   );
 };

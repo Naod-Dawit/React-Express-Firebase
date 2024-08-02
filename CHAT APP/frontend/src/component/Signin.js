@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth, db } from "../firebaseconfig";
+import { auth, db, updateUserStatus } from "../firebaseconfig";
 import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import { collection, getDocs } from "firebase/firestore";
-
-
 
 import "../styles/login.css";
 const Auth = () => {
   const navigate = useNavigate();
   const [data, setData] = useState({ email: "", password: "" });
+
+  const [loading, setLoading] = useState(false); 
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -25,16 +26,33 @@ const Auth = () => {
   };
 
   const handleSignIn = async () => {
+    setLoading(true);
+    setError("");
     try {
-      await signInWithEmailAndPassword(auth, data.email, data.password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        data.email,
+        data.password
+      );
+      const user = userCredential.user;
+      
+      updateUserStatus(user.uid, true);
+      console.log(user);
+      navigate('/userpage')
     } catch (error) {
       console.error("Error signing in:", error);
+      setError("Failed to sign in. Please check your email and password.");
+    }finally{
+      setLoading(false)
     }
   };
 
   useEffect(() => {
     const unSubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) navigate("/userpage");
+      if (user) {
+        updateUserStatus(user.uid, true);
+        navigate('/userpage')
+      }
     });
 
     return () => unSubscribe();
@@ -63,8 +81,12 @@ const Auth = () => {
           />
         </div>
 
-          <button className="button-create" onClick={() => navigate("/")}>JOIN NOW</button>
-          <button className='button-signin' onClick={handleSignIn}>SIGN IN</button>
+        <button className="button-create" onClick={() => navigate("/")}>
+          JOIN NOW
+        </button>
+        <button className="button-signin" onClick={handleSignIn}>
+          SIGN IN
+        </button>
       </div>
     </>
   );
